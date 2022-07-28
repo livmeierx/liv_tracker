@@ -1,5 +1,6 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
+const promisemysql = require("promise-mysql");
 
 const consoleTable = require("console.table");
 
@@ -8,6 +9,8 @@ const connectionProp = {
     host: "localhost",
     port: 3006,
     user: "root",
+    password: "password",
+    database: "employees_DB"
 }
 
 // create connection
