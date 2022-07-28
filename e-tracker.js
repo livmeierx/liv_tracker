@@ -538,17 +538,147 @@ function deleteEmp() {
 
 // function to delete a role
 function deleteRole() {
+    let roleArr = [];
 
+    promisemysql.createConnection(connectionProp)
+    .then((conn) => {
+        return conn.query("SELECT id, title FROM role");
+    }).then((roles) => {
+        for (i=0; i < roles.length; i++){
+            roleArr.push(roles[i].title);
+        }
+        inquirer.prompt([{
+            name: "continueDelete",
+            type: "list",
+            message: "Deleting role will delete all employees associated with the role. Do you want to continue?",
+            choices: ["NO", "YES"]
+        }]).then((answer) => {
+            if (answer.continueDelete === "NO"){
+                mainMenu();
+            }
+        }).then(() => {
+            inquirer.prompt([{
+                name: "role",
+                type: "list",
+                message: "Which role would you like to delete?",
+                choices: roleArr
+            },{
+                name: "confirmDelete",
+                type: "input",
+                message: "Type the role title exeactly to confirm the deletion"
+            }]).then((answer) => {
+                if(answer.confirmDelete === answer.role){
+                    let roleID;
+                    for (i=0; i < roles.length; i++){
+                        if (answer.role == roles[i].title){
+                            roleID = roles[i].id;
+                        }
+                    }
+                    connection.query(`DELETE FROM role WHERE id=${roleID};`, (err, res) => {
+                        if(err) return err;
+
+                        console.log(`\n ROLE '${answer.role}' DELETED...\n `);
+
+                        mainMenu();
+                    });
+                } else {
+                    console.log(`\n ROLE '${answer.role}' NOT DELETED.../n` );
+                    
+                    mainMenu();
+                }
+            });
+        })
+    });
 }
 
 // function to delete a department
 function deleteDept() {
+    let deptArr = [];
 
+    promisemysql.createConnection(connectionProp)
+    .then((conn) => {
+        return conn.query("SELECT id, name FROM dept");
+    }).then((depts) => {
+        for (i=0; i < depts.length; i++){
+            deptArr.push(depts[i].name);
+        }
+        inquirer.prompt([{
+            name: "continueDelete",
+            type: "list",
+            message: "Deleting a department will delete all employees. Do you want to continue?",
+            choices: ["NO", "YES"]
+        }]).then((answer) => {
+            if (answer.continueDelete === "NO"){
+                mainMenu();
+            }
+        }).then(() => {
+            inquirer.prompt([{
+                name: "dept",
+                type: "list",
+                message: "Which department would you like to delete?",
+                choices: deptArr
+            },{
+                name: "confirmDelete",
+                type: "input",
+                message: "Type the department name to confirm the deletion: "
+            }]).then((answer) => {
+                if (answer.confirmDelete === answer.dept){
+                    let deptID;
+                    for (i=0; i < depts.length; i++){
+                        if (answer.dept == depts[i].name){
+                            deptID = depts[i].id;
+                        }
+                    }
+                    connection.query(`DELETE FROM department WHERE id=${deptID};`, (err, res) => {
+                        if(err) return err;
+
+                        console.log(`\n DEPARTMENT '${answer.dept}' DELETED...\n `);
+
+                        mainMenu();
+                    });
+                }
+                else {
+                    console.log(`\n DEPARTMENT '${answer.dept}' NOT DELETED...\n`);
+
+                    mainMenu();
+                }
+            });
+        })
+    });
 }
 
 // function to view department budget
 function viewDeptBudget() {
+    promisemysql.createConnection(connectionProp)
+    .then((conn) => {
+        return Promise.all([
+            conn.query("SELECT department.name AS department, role.salary FROM employee e LEFT JOIN employee m ON e.manager_id = m.id INNER JOIN role ON e.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY department ASC"),
+            conn.query('SELECT name FROM department ORDER BY name ASC')
+        ]);
+    }).then(([deptSalaries, departments]) => {
+        let budgetArr = [];
+        let department;
 
+        for (d=0; d < departments.length; d++){
+            let departmentBudget = 0;
+
+            for (i=0; i <deptSalaries.length; i++){
+                if (departments[d].name == deptSalaries[i].department){
+                    departmentBudget += deptSalaries[i].salary;
+                }
+            }
+            department = {
+                Department: departments[d].name,
+                Budget: departmentBudget
+            }
+            budgetArr.push(department);
+        }
+        console.log("\n");
+
+        console.table(budgetArr);
+
+        mainMenu();
+    });
 }
 
 
