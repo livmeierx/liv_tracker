@@ -7,7 +7,7 @@ const consoleTable = require("console.table");
 // connection properties
 const connectionProp = {
     host: "localhost",
-    port: 3006,
+    port: 3306,
     user: "root",
     password: "password",
     database: "employees_DB"
